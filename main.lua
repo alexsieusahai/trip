@@ -248,7 +248,6 @@ function love.update(dt)
         end
 
     else --what if it's gameover?
-        print("restarting...")
         numPlatforms = 0
         if score > highScore then
             highScore = score
