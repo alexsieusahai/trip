@@ -1,13 +1,8 @@
 --TODO:
 --  Implement a diffculty curve
---  Pseudorandomize, try to make it a little harder
---      - can you write that to a file then pull it up every time?
 --  Implement double jump ( a little)
 
 --player and general game
---
---DIFFICULTY IMPLEMENTATION
---  You're given only 30 seconds of time to begin with, but if you touch a yellow block then you gain more time
 player = {}
 platforms = {}
 platformTimer = 0.01
@@ -18,8 +13,11 @@ yMove = 0
 score = 0
 highScore = score
 
+-- try this
+oldPlatformHeight = 700
+
 -- enemy
-createEnemyTimerMax = 1
+createEnemyTimerMax = 0.75
 createEnemyTimer = createEnemyTimerMax
 enemyImg = nil
 enemies = {}
@@ -38,7 +36,8 @@ coinImg = nil
 coins = {}
 
 -- life remaining
-remainingHealthTimer = 30
+remainingHealthTimer = 15
+startRemainingHealthTimer = remainingHealthTimer
 
 function love.load()
     player.x = 100 
@@ -46,17 +45,16 @@ function love.load()
 
     player.xVelocity = 0
     player.yVelocity = 0
-    player.gravity = -500
+    player.gravity = -900
     player.ground = love.graphics.getHeight()
-    player.jumpHeight = -400
+    player.jumpHeight = -700
 
 
     -- load images
     player.img = love.graphics.newImage('purple.png')
-    platformImg = love.graphics.newImage('teal.png')
+    platformImg = love.graphics.newImage('tealBig.png')
     enemyImg = love.graphics.newImage('red.png')
-    bulletImg = love.graphics.newImage('black.png')
-    coinImg = love.graphics.newImage('orange.png')
+    bulletImg = love.graphics.newImage('black.png') coinImg = love.graphics.newImage('orange.png')
 end
 
 function love.update(dt)
@@ -66,24 +64,32 @@ function love.update(dt)
 
         -- construct the platforms
         if platformTimer < 0 then
-            newPlatform = { x = 600, y = 700, img = platformImg }
+            newPlatform = { x = 600, y = oldPlatformHeight, img = platformImg }
             table.insert(platforms, newPlatform)
             numPlatforms = numPlatforms + 1
             platformTimer = maxPlatformTimer
         end
+
         platformTimer = platformTimer - dt
+        if numPlatforms > 0 then
+            oldPlatformHeight = platforms[numPlatforms].y
+        end
+
         if love.keyboard.isDown('s') then
             if numPlatforms > 0 then
-            platforms[numPlatforms].y = platforms[numPlatforms].y + dt*400
+                platforms[numPlatforms].y = platforms[numPlatforms].y + dt*400
+                if platforms[numPlatforms].y > 700 then
+                    platforms[numPlatforms].y = 700
+                end
             end
         end
         if love.keyboard.isDown('w') then 
             if numPlatforms > 0 then
-            platforms[numPlatforms].y = platforms[numPlatforms].y - dt*400
+                platforms[numPlatforms].y = platforms[numPlatforms].y - dt*400
             end
         end
         for i, platform in ipairs(platforms) do
-            platform.x = platform.x - dt*180
+            platform.x = platform.x - dt*300
             -- need to handle garbage collection for platforms
         end
         
@@ -99,7 +105,7 @@ function love.update(dt)
                 player.yVelocity = player.yVelocity - 200*dt
             end
             if numPlatforms > 0 then
-                if player.yVelocity == 0 or math.abs(player.y - platforms[numPlatforms].y) < 10 then
+                if player.yVelocity == 0 then
                     player.yVelocity = player.jumpHeight
                 end
             end
@@ -132,7 +138,11 @@ function love.update(dt)
 
         -- implement enemies
         if createEnemyTimer < 0 then
-            randomNumber = math.random(10, love.graphics.getHeight() - 10)
+            -- is pseudorandom better than totally random or no?
+
+            --randomNumber = math.random(10, love.graphics.getHeight() - 10)
+            randomNumber = math.random(player.y-250,player.y+250)
+
             newEnemy = {x = 1280, y = randomNumber, img = enemyImg}
             table.insert(enemies, newEnemy)
             createEnemyTimer = createEnemyTimerMax
@@ -141,7 +151,7 @@ function love.update(dt)
 
         -- update positions of enemies
         for i, enemy in ipairs(enemies) do
-            enemy.x = enemy.x - (300*dt)
+            enemy.x = enemy.x - (500*dt)
             if enemy.x < 0 then
                 table.remove(enemies,i)
             end
@@ -153,7 +163,6 @@ function love.update(dt)
             newCoin = {x = 1280, y = randomNumber, img = coinImg}
             table.insert(coins, newCoin)
             createCoinTimer = createCoinTimerMax
-            remainingHealthTimer = remainingHealthTimer + 10
 
         end
         createCoinTimer = createCoinTimer - dt
@@ -174,7 +183,7 @@ function love.update(dt)
         
         -- update the positions of bullets
         for i,bullet in ipairs(bullets) do
-            bullet.x = bullet.x + (250*dt)
+            bullet.x = bullet.x + (350*dt)
             if bullet.x > love.graphics.getWidth() then 
                 table.remove(bullets,i)
             end
@@ -182,7 +191,7 @@ function love.update(dt)
 
         --update the positions of the coins
         for i,coin in ipairs(coins) do
-            coin.x = coin.x - 250*dt
+            coin.x = coin.x - 300*dt
             if coin.x < 0 then
                 table.remove(coins,i)
             end
@@ -202,21 +211,25 @@ function love.update(dt)
         -- handle collision of enemies and player
         for i,enemy in ipairs(enemies) do
             if checkCollisionBullet(player.x,player.y,player.img:getWidth(),player.img:getHeight(), enemy.x, enemy.y, enemy.img:getWidth(), enemy.img:getHeight()) then
-                gameOver = true;
+                remainingHealthTimer = remainingHealthTimer - 10
                 table.remove(enemies,i)
             end
         end
 
         --handle collision of coins and player
         for i,coin in ipairs(coins) do
-            if checkCollisionBullet(player.x,player.y,player.img:getWidth(),player.img:getHeight(), coin.x,coin.y, coin.img:getWidth(), coin.img:getHeight()) then
+            if checkCollisionLenient(player.x,player.y,player.img:getWidth(),player.img:getHeight(), coin.x,coin.y, coin.img:getWidth(), coin.img:getHeight()) then
                 score = score + 10
+                remainingHealthTimer = remainingHealthTimer + 5
                 table.remove(coins,i)
             end
         end
 
         -- tick the remaining health
         remainingHealthTimer = remainingHealthTimer - dt
+        if remainingHealthTimer < 0 then
+            gameOver = true
+        end
 
     else --what if it's gameover?
         print("restarting...")
@@ -228,7 +241,9 @@ function love.update(dt)
         platforms = {}
         coins = {}
         bullets = {}
+        remainingHealthTimer = startRemainingHealthTimer+2
         enemies = {}
+        oldPlatformHeight = 700
         gameOver = false
         love.timer.sleep(1)
         love.load()
@@ -257,6 +272,12 @@ function checkCollisionBullet(x1,y1,w1,h1,x2,y2,w2,h2)
            y2 < y1+h1
 end
        
+function checkCollisionLenient(x1,y1,w1,h1,x2,y2,w2,h2)
+    return x1-x2-w2 < 10  and
+           x2-x1-w1 < 10 and
+           y1-y2-h2 < 10 and
+           y2-y1-h1 < 10 
+end
 
 function checkFailure(player,platform)
     if player.x+player.img:getWidth() > platform.x and player.x < platform.x then
