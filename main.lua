@@ -27,7 +27,7 @@ enemies = {}
 
 --projectile
 canShoot = true
-canShootTimerMax = 0.3
+canShootTimerMax = 0.30
 canShootTimer = canShootTimerMax
 bulletImg = nil
 bullets = {}
@@ -235,8 +235,7 @@ function love.update(dt)
 
         --handle collision of coins and player
         for i,coin in ipairs(coins) do
-            --if checkCollisionLenient(player.x,player.y,player.img:getWidth(),player.img:getHeight(), coin.x,coin.y, coin.img:getWidth(), coin.img:getHeight()) then
-            if checkCollisionSquares(player.x,player.y,coin.x-4,coin.y+4,player.img:getHeight()) then
+            if checkCollisionSquares(player.x,player.y,coin.x-4,coin.y-4,player.img:getHeight()+8) then
                 score = score + 10
                 remainingHealthTimer = remainingHealthTimer + 1
                 table.remove(coins,i)
