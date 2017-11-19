@@ -1,6 +1,5 @@
 --TODO:
 --  Powerups
---  can we blink the player if he takes damage?
 
 --player and general game
 player = {}
@@ -21,14 +20,14 @@ blink = false
 oldPlatformHeight = 700
 
 -- enemy
-createEnemyTimerMax = 0.1
+createEnemyTimerMax = 0.2
 createEnemyTimer = createEnemyTimerMax
 enemyImg = nil
 enemies = {}
 
 --projectile
 canShoot = true
-canShootTimerMax = 0.25
+canShootTimerMax = 0.3
 canShootTimer = canShootTimerMax
 bulletImg = nil
 bullets = {}
@@ -40,8 +39,7 @@ coinImg = nil
 coins = {}
 
 -- life remaining
-remainingHealthTimer = 15
-startRemainingHealthTimer = remainingHealthTimer
+remainingHealthTimer = 3
 
 function love.load()
     player.x = 100 
@@ -104,9 +102,10 @@ function love.update(dt)
 
         if love.keyboard.isDown('a') then
             player.x = player.x - dt*400
-            if player.x < 0 then
-                gameOver = true
-            end
+        end
+
+        if player.x < 0 then
+            gameOver = true
         end
         
 
@@ -221,7 +220,6 @@ function love.update(dt)
                     table.remove(bullets,i)
                     table.remove(enemies,j)
                     score = score + 1
-                    remainingHealthTimer = remainingHealthTimer + 1
                 end
             end
         end
@@ -229,7 +227,7 @@ function love.update(dt)
         -- handle collision of enemies and player
         for i,enemy in ipairs(enemies) do
             if checkCollisionSquares(player.x,player.y, enemy.x, enemy.y, enemy.img:getHeight()) then
-                remainingHealthTimer = remainingHealthTimer - 10
+                remainingHealthTimer = remainingHealthTimer - 1
                 numBlinks = 6
                 table.remove(enemies,i)
             end
@@ -240,14 +238,13 @@ function love.update(dt)
             --if checkCollisionLenient(player.x,player.y,player.img:getWidth(),player.img:getHeight(), coin.x,coin.y, coin.img:getWidth(), coin.img:getHeight()) then
             if checkCollisionSquares(player.x,player.y,coin.x-4,coin.y+4,player.img:getHeight()) then
                 score = score + 10
-                remainingHealthTimer = remainingHealthTimer + 3
+                remainingHealthTimer = remainingHealthTimer + 1
                 table.remove(coins,i)
             end
         end
 
         -- tick the remaining health
-        remainingHealthTimer = remainingHealthTimer - dt
-        if remainingHealthTimer < 0 then
+        if remainingHealthTimer <= 0 then
             gameOver = true
         end
 
@@ -261,7 +258,7 @@ function love.update(dt)
         platforms = {}
         coins = {}
         bullets = {}
-        remainingHealthTimer = startRemainingHealthTimer+2
+        remainingHealthTimer = 3
         enemies = {}
         numBlinks = -1
         oldPlatformHeight = 700
@@ -353,5 +350,5 @@ function love.draw()
     end
     love.graphics.print("Score:"..score, 50, 100, 0, 3, 3)
     love.graphics.print("High Score:"..highScore, 50,150,0,3,3)
-    love.graphics.print("Life Remaining: "..math.floor(remainingHealthTimer), 50, 200, 0, 3,3)
+    love.graphics.print("Lives Remaining: "..math.floor(remainingHealthTimer), 50, 200, 0, 3,3)
 end
