@@ -20,7 +20,7 @@ blink = false
 oldPlatformHeight = 700
 
 -- enemy
-createEnemyTimerMax = 0.2
+createEnemyTimerMax = 0.2 -- implement difficulty scaling up to 0.1
 createEnemyTimer = createEnemyTimerMax
 enemyImg = nil
 enemies = {}
@@ -97,7 +97,7 @@ function love.update(dt)
         
         -- implementing fastfall
         if love.keyboard.isDown('s') then
-            player.yVelocity = player.yVelocity + 200*dt
+            player.yVelocity = player.yVelocity + 300*dt
         end
 
         if love.keyboard.isDown('a') then
@@ -123,8 +123,8 @@ function love.update(dt)
         
         if love.keyboard.isDown('d') then
             player.x = player.x + dt*200
-            if player.x > 400 then
-                player.x = 400 
+            if player.x > 600 then
+                player.x = 600 
             end
         end
         -- simple game physics
@@ -162,6 +162,12 @@ function love.update(dt)
             newEnemy = {x = 1280, y = randomNumber, img = enemyImg}
             table.insert(enemies, newEnemy)
             createEnemyTimer = createEnemyTimerMax
+            -- decrease createEnemyTimerMax by a very small amount
+            createEnemyTimerMax = createEnemyTimerMax - 0.0005
+            print(createEnemyTimerMax)
+            if createEnemyTimerMax < 0.1 then
+                createEnemyTimerMax = 0.1
+            end
         end
         createEnemyTimer = createEnemyTimer - dt
 
@@ -259,6 +265,7 @@ function love.update(dt)
         remainingHealthTimer = 3
         enemies = {}
         numBlinks = -1
+        createEnemyTimerMax = 0.2
         oldPlatformHeight = 700
         gameOver = false
         love.timer.sleep(1)
