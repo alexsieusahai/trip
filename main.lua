@@ -21,14 +21,14 @@ blink = false
 oldPlatformHeight = 700
 
 -- enemy
-createEnemyTimerMax = 0.75
+createEnemyTimerMax = 0.1
 createEnemyTimer = createEnemyTimerMax
 enemyImg = nil
 enemies = {}
 
 --projectile
 canShoot = true
-canShootTimerMax = 0.4
+canShootTimerMax = 0.25
 canShootTimer = canShootTimerMax
 bulletImg = nil
 bullets = {}
@@ -79,7 +79,7 @@ function love.update(dt)
             oldPlatformHeight = platforms[numPlatforms].y
         end
 
-        if love.keyboard.isDown('s') then
+        if love.keyboard.isDown('down') then
             if numPlatforms > 0 then
                 platforms[numPlatforms].y = platforms[numPlatforms].y + dt*400
                 if platforms[numPlatforms].y > 700 then
@@ -87,7 +87,7 @@ function love.update(dt)
                 end
             end
         end
-        if love.keyboard.isDown('w') then 
+        if love.keyboard.isDown('up') then 
             if numPlatforms > 0 then
                 platforms[numPlatforms].y = platforms[numPlatforms].y - dt*400
             end
@@ -98,13 +98,20 @@ function love.update(dt)
         end
         
         -- implementing fastfall
-        if love.keyboard.isDown('down') then
+        if love.keyboard.isDown('s') then
             player.yVelocity = player.yVelocity + 200*dt
         end
-            
+
+        if love.keyboard.isDown('a') then
+            player.x = player.x - dt*400
+            if player.x < 0 then
+                gameOver = true
+            end
+        end
+        
 
         --handle jumping of the player
-        if love.keyboard.isDown('up') then 
+        if love.keyboard.isDown('w') then 
             if player.yVelocity ~= 0 then
                 player.yVelocity = player.yVelocity - 200*dt
             end
@@ -115,6 +122,12 @@ function love.update(dt)
             end
         end
         
+        if love.keyboard.isDown('d') then
+            player.x = player.x + dt*200
+            if player.x > 400 then
+                player.x = 400 
+            end
+        end
         -- simple game physics
         if player.yVelocity ~= 0 then
             player.y = player.y + player.yVelocity * dt
@@ -136,7 +149,7 @@ function love.update(dt)
                 player.yVelocity = 0
             end
             if checkFailure(player,platform) then
-                gameOver = true
+                player.x = platform.x-player.img:getWidth()
             end
         end
 
@@ -178,11 +191,11 @@ function love.update(dt)
             canShoot = true
         end
         -- implement shooting action
-        if love.keyboard.isDown('right') and canShoot then
-            newBullet = { x = player.x + player.img:getWidth(), y = player.y-player.img:getHeight()/2, img = bulletImg}
-            canShoot = false
-            canShootTimer = canShootTimerMax
-            table.insert(bullets,newBullet)
+        if canShoot then
+                newBullet = { x = player.x + player.img:getWidth(), y = player.y-player.img:getHeight()/2, img = bulletImg}
+                canShoot = false
+                canShootTimer = canShootTimerMax
+                table.insert(bullets,newBullet)
         end
         
         -- update the positions of bullets
@@ -208,7 +221,7 @@ function love.update(dt)
                     table.remove(bullets,i)
                     table.remove(enemies,j)
                     score = score + 1
-                    remainingHealthTimer = remainingHealthTimer + 2
+                    remainingHealthTimer = remainingHealthTimer + 1
                 end
             end
         end
@@ -227,7 +240,7 @@ function love.update(dt)
             --if checkCollisionLenient(player.x,player.y,player.img:getWidth(),player.img:getHeight(), coin.x,coin.y, coin.img:getWidth(), coin.img:getHeight()) then
             if checkCollisionSquares(player.x,player.y,coin.x-4,coin.y+4,player.img:getHeight()) then
                 score = score + 10
-                remainingHealthTimer = remainingHealthTimer + 5
+                remainingHealthTimer = remainingHealthTimer + 3
                 table.remove(coins,i)
             end
         end
@@ -273,8 +286,6 @@ function checkCollisionY(player,platform,yMove)
 
     if player.x > platform.x and player.x < platform.x+platform.img:getWidth() then
         if player.y > platform.y+yMove then
-            player.yVelocity = 0
-            player.y = platform.y
             return true
         end
     end
@@ -302,14 +313,15 @@ end
 function checkFailure(player,platform)
     if player.x+player.img:getWidth() > platform.x and player.x < platform.x then
         if player.y-40 > platform.y then
-            gameOver = true
+            return true
         end
     end
     return false
 end
 
 function love.draw()
-    -- handle gameover  case
+    -- handle gameover case
+    love.graphics.rectangle('fill',0,0,10,love.graphics.getHeight())
     love.graphics.setBackgroundColor(112,128,144)
     if gameOver then
         love.graphics.print("GAME OVER!", love.graphics.getWidth()/2, 100,0,5,5)
