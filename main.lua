@@ -174,7 +174,6 @@ function love.update(dt)
             createEnemyTimer = createEnemyTimerMax
             -- decrease createEnemyTimerMax by a very small amount
             createEnemyTimerMax = createEnemyTimerMax - 0.0005
-            print(createEnemyTimerMax)
             if createEnemyTimerMax < 0.1 then
                 createEnemyTimerMax = 0.1
             end
@@ -267,7 +266,6 @@ function love.update(dt)
         powerUpTimer = powerUpTimer - dt
         -- make new powerup if timer says so
         if powerUpTimer < 0 then
-            print("got here!")
             randInt = math.random(50,love.graphics.getHeight())
             newPowerUp = {x = 1280, y = randInt,img = powerUpImg}
             table.insert(powerUps,newPowerUp)
@@ -293,7 +291,6 @@ function love.update(dt)
         else
             canShootTimerMax = 0.3
         end
-        print(canShootTimerMax)
         powerUpDuration = powerUpDuration - dt
         
 
