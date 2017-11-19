@@ -1,6 +1,6 @@
 --TODO:
---  Implement a diffculty curve
---  Implement double jump ( a little)
+--  Powerups
+--  can we blink the player if he takes damage?
 
 --player and general game
 player = {}
@@ -12,6 +12,10 @@ gameOver = false
 yMove = 0
 score = 0
 highScore = score
+
+-- lets blink the player if he takes damage
+numBlinks = -1
+blink = false
 
 -- try this
 oldPlatformHeight = 700
@@ -175,7 +179,7 @@ function love.update(dt)
         end
         -- implement shooting action
         if love.keyboard.isDown('right') and canShoot then
-            newBullet = { x = player.x + player.img:getWidth(), y = player.y, img = bulletImg}
+            newBullet = { x = player.x + player.img:getWidth(), y = player.y-player.img:getHeight()/2, img = bulletImg}
             canShoot = false
             canShootTimer = canShootTimerMax
             table.insert(bullets,newBullet)
@@ -204,21 +208,24 @@ function love.update(dt)
                     table.remove(bullets,i)
                     table.remove(enemies,j)
                     score = score + 1
+                    remainingHealthTimer = remainingHealthTimer + 2
                 end
             end
         end
 
         -- handle collision of enemies and player
         for i,enemy in ipairs(enemies) do
-            if checkCollisionBullet(player.x,player.y,player.img:getWidth(),player.img:getHeight(), enemy.x, enemy.y, enemy.img:getWidth(), enemy.img:getHeight()) then
+            if checkCollisionSquares(player.x,player.y, enemy.x, enemy.y, enemy.img:getHeight()) then
                 remainingHealthTimer = remainingHealthTimer - 10
+                numBlinks = 6
                 table.remove(enemies,i)
             end
         end
 
         --handle collision of coins and player
         for i,coin in ipairs(coins) do
-            if checkCollisionLenient(player.x,player.y,player.img:getWidth(),player.img:getHeight(), coin.x,coin.y, coin.img:getWidth(), coin.img:getHeight()) then
+            --if checkCollisionLenient(player.x,player.y,player.img:getWidth(),player.img:getHeight(), coin.x,coin.y, coin.img:getWidth(), coin.img:getHeight()) then
+            if checkCollisionSquares(player.x,player.y,coin.x-4,coin.y+4,player.img:getHeight()) then
                 score = score + 10
                 remainingHealthTimer = remainingHealthTimer + 5
                 table.remove(coins,i)
@@ -243,12 +250,21 @@ function love.update(dt)
         bullets = {}
         remainingHealthTimer = startRemainingHealthTimer+2
         enemies = {}
+        numBlinks = -1
         oldPlatformHeight = 700
         gameOver = false
         love.timer.sleep(1)
         love.load()
     end
 end
+
+function checkCollisionSquares(x1,y1,x2,y2,r)
+    if math.abs(x1-x2) < r and math.abs(y1-y2) < r then
+        return true
+    end
+    return false
+end
+
 
 function checkCollisionY(player,platform,yMove)
     -- handle player death next
@@ -279,6 +295,10 @@ function checkCollisionLenient(x1,y1,w1,h1,x2,y2,w2,h2)
            y2-y1-h1 < 10 
 end
 
+function checkCollision(x1,y1,w1,h1,x2,y2,w2,h2)
+end
+
+
 function checkFailure(player,platform)
     if player.x+player.img:getWidth() > platform.x and player.x < platform.x then
         if player.y-40 > platform.y then
@@ -292,7 +312,7 @@ function love.draw()
     -- handle gameover  case
     love.graphics.setBackgroundColor(112,128,144)
     if gameOver then
-        love.graphics.print("GAME OVER!", love.graphics.getWidth()/2, love.graphics.getHeight()/2,0,5,5)
+        love.graphics.print("GAME OVER!", love.graphics.getWidth()/2, 100,0,5,5)
     end
     love.graphics.draw(player.img,player.x,player.y, 0, 1, 1, 0, 32) -- first 0 is angle
     for i, platform in ipairs(platforms) do
@@ -300,6 +320,16 @@ function love.draw()
     end
     for i,enemy in ipairs(enemies) do 
         love.graphics.draw(enemy.img,enemy.x,enemy.y)
+    end
+
+    -- lets handle blinking
+    if numBlinks >= 0 then
+        numBlinks = numBlinks - 1
+        if numBlinks % 2 == 0 then
+            player.img = love.graphics.newImage('white.png')
+        else
+            player.img = love.graphics.newImage('purple.png')
+        end
     end
 
     for i, bullet in ipairs(bullets) do
