@@ -19,6 +19,14 @@ blink = false
 -- try this
 oldPlatformHeight = 700
 
+-- powerup 
+powerUpTimer = 5
+powerUpTimerMax = 5
+powerUpDuration = 2
+powerUpImg = nil
+powerUps = {}
+
+
 -- enemy
 createEnemyTimerMax = 0.2 -- implement difficulty scaling up to 0.1
 createEnemyTimer = createEnemyTimerMax
@@ -56,7 +64,9 @@ function love.load()
     player.img = love.graphics.newImage('purple.png')
     platformImg = love.graphics.newImage('tealBig.png')
     enemyImg = love.graphics.newImage('red.png')
-    bulletImg = love.graphics.newImage('black.png') coinImg = love.graphics.newImage('orange.png')
+    bulletImg = love.graphics.newImage('black.png') 
+    coinImg = love.graphics.newImage('orange.png')
+    powerUpImg = love.graphics.newImage('limeGreen.png')
 end
 
 function love.update(dt)
@@ -253,6 +263,40 @@ function love.update(dt)
             gameOver = true
         end
 
+        -- tick for the powerup
+        powerUpTimer = powerUpTimer - dt
+        -- make new powerup if timer says so
+        if powerUpTimer < 0 then
+            print("got here!")
+            randInt = math.random(50,love.graphics.getHeight())
+            newPowerUp = {x = 1280, y = randInt,img = powerUpImg}
+            table.insert(powerUps,newPowerUp)
+            powerUpTimer = powerUpTimerMax 
+        end
+        -- update position
+        for i,powerUp in ipairs(powerUps) do
+            powerUp.x = powerUp.x - 600*dt
+            if powerUp.x < 0 then
+                table.remove(powerUps,i)
+            end
+        end
+        -- check collision
+        for i,powerUp in ipairs(powerUps) do
+            if checkCollisionSquares(player.x, player.y,powerUp.x,powerUp.y,player.img:getHeight()) then
+                powerUpDuration = 2
+                table.remove(powerUps,i)
+            end
+        end
+
+        if powerUpDuration > 0 then
+            canShootTimerMax = 0.1
+        else
+            canShootTimerMax = 0.3
+        end
+        print(canShootTimerMax)
+        powerUpDuration = powerUpDuration - dt
+        
+
     else --what if it's gameover?
         numPlatforms = 0
         if score > highScore then
@@ -353,6 +397,11 @@ function love.draw()
     for i, coin in ipairs(coins) do
         love.graphics.draw(coin.img,coin.x,coin.y)
     end
+
+    for i,powerUp in ipairs(powerUps) do
+        love.graphics.draw(powerUp.img,powerUp.x,powerUp.y)
+    end
+
     love.graphics.print("Score:"..score, 50, 100, 0, 3, 3)
     love.graphics.print("High Score:"..highScore, 50,150,0,3,3)
     love.graphics.print("Lives Remaining: "..math.floor(remainingHealthTimer), 50, 200, 0, 3,3)
