@@ -22,7 +22,7 @@ oldPlatformHeight = 700
 -- powerup 
 powerUpTimer = 5
 powerUpTimerMax = 5
-powerUpDuration = 2
+powerUpDuration = 0
 powerUpImg = nil
 powerUps = {}
 
@@ -137,6 +137,7 @@ function love.update(dt)
                 player.x = 600 
             end
         end
+
         -- simple game physics
         if player.yVelocity ~= 0 then
             player.y = player.y + player.yVelocity * dt
@@ -144,9 +145,6 @@ function love.update(dt)
         player.yVelocity = player.yVelocity - player.gravity*dt
         if player.y > player.ground then
             player.yVelocity = 0
-            player.y = player.ground
-        end
-        if player.y > player.ground then
             player.y = player.ground
         end
 
@@ -241,7 +239,9 @@ function love.update(dt)
 
         -- handle collision of enemies and player
         for i,enemy in ipairs(enemies) do
-            if checkCollisionSquares(player.x,player.y, enemy.x, enemy.y, enemy.img:getHeight()) then
+            if checkCollisionSquares(player.x,player.y, enemy.x, enemy.y+30, enemy.img:getHeight()) then
+                print(player.y)
+                print(enemy.y)
                 remainingHealthTimer = remainingHealthTimer - 1
                 numBlinks = 6
                 table.remove(enemies,i)
@@ -329,6 +329,7 @@ function checkCollisionY(player,platform,yMove)
 
     if player.x > platform.x and player.x < platform.x+platform.img:getWidth() then
         if player.y > platform.y+yMove then
+            player.y = platform.y
             return true
         end
     end
