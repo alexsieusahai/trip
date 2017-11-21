@@ -350,9 +350,6 @@ function checkCollisionLenient(x1,y1,w1,h1,x2,y2,w2,h2)
            y2-y1-h1 < 10 
 end
 
-function checkCollision(x1,y1,w1,h1,x2,y2,w2,h2)
-end
-
 
 function checkFailure(player,platform)
     if player.x+player.img:getWidth() > platform.x and player.x < platform.x then
